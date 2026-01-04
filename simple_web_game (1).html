@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Click the Box — Hard Mode</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #020617;
+      color: white;
+      overflow: hidden;
+    }
+    .game {
+      text-align: center;
+      z-index: 2;
+      user-select: none;
+    }
+    #box, .trap {
+      position: absolute;
+      cursor: pointer;
+      border-radius: 12px;
+      display: none;
+    }
+    #box {
+      background: #22c55e;
+    }
+    .trap {
+      background: #ef4444;
+      opacity: 0.9;
+    }
+    .stats {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    button {
+      padding: 10px 18px;
+      font-size: 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #38bdf8;
+      color: black;
+    }
+    #message { margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="game">
+    <h1>Click the Box 🎮</h1>
+    <div class="stats">
+      <p>Score: <span id="score">0</span></p>
+      <p>Level: <span id="level">1</span></p>
+      <p>Time: <span id="time">12</span>s</p>
+    </div>
+    <button onclick="startGame()">Start / Restart</button>
+    <p id="message"></p>
+  </div>
+
+  <div id="box" onclick="hitBox()"></div>
+  <div id="trap1" class="trap" onclick="hitTrap()"></div>
+  <div id="trap2" class="trap" onclick="hitTrap()"></div>
+
+  <script>
+    let score = 0;
+    let level = 1;
+    let timeLeft = 12;
+    let timer;
+    let moveInterval;
+
+    const box = document.getElementById('box');
+    const trap1 = document.getElementById('trap1');
+    const trap2 = document.getElementById('trap2');
+    const scoreText = document.getElementById('score');
+    const levelText = document.getElementById('level');
+    const timeText = document.getElementById('time');
+    const message = document.getElementById('message');
+
+    function startGame() {
+      clearInterval(timer);
+      clearInterval(moveInterval);
+      score = 0;
+      level = 1;
+      timeLeft = 12;
+      updateUI();
+      message.textContent = '';
+      showAll();
+      resizeElements();
+      moveAll();
+      startTimer();
+      startMovement();
+    }
+
+    function startTimer() {
+      timer = setInterval(() => {
+        // timer drains faster with level
+        timeLeft -= (level >= 6 ? 2 : 1);
+        timeText.textContent = Math.max(0, timeLeft);
+        if (timeLeft <= 0) gameOver();
+      }, 1000);
+    }
+
+    function startMovement() {
+      // movement gets faster each level
+      const speed = Math.max(220, 700 - level * 60);
+      moveInterval = setInterval(moveAll, speed);
+    }
+
+    function hitBox() {
+      score++;
+      scoreText.textContent = score;
+      timeLeft += 1; // tiny reward
+      if (score % 4 === 0) levelUp();
+      moveAll();
+    }
+
+    function hitTrap() {
+      // punishment
+      timeLeft -= 2;
+      score = Math.max(0, score - 1);
+      updateUI();
+      message.textContent = 'Wrong box 💀';
+      moveAll();
+    }
+
+    function levelUp() {
+      level++;
+      levelText.textContent = level;
+      resizeElements();
+      message.textContent = 'Level Up 🔥';
+      clearInterval(moveInterval);
+      startMovement();
+    }
+
+    function resizeElements() {
+      const size = Math.max(26, 82 - level * 6);
+      box.style.width = size + 'px';
+      box.style.height = size + 'px';
+      const trapSize = Math.max(22, size - 10);
+      trap1.style.width = trapSize + 'px';
+      trap1.style.height = trapSize + 'px';
+      trap2.style.width = trapSize + 'px';
+      trap2.style.height = trapSize + 'px';
+    }
+
+    function moveAll() {
+      moveEl(box);
+      // traps appear after level 3
+      if (level >= 3) {
+        trap1.style.display = 'block';
+        moveEl(trap1);
+      }
+      if (level >= 5) {
+        trap2.style.display = 'block';
+        moveEl(trap2);
+      }
+    }
+
+    function moveEl(el) {
+      const pad = 90;
+      const x = Math.random() * (window.innerWidth - pad);
+      const y = Math.random() * (window.innerHeight - pad);
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+    }
+
+    function showAll() {
+      box.style.display = 'block';
+      trap1.style.display = 'none';
+      trap2.style.display = 'none';
+    }
+
+    function gameOver() {
+      clearInterval(timer);
+      clearInterval(moveInterval);
+      box.style.display = 'none';
+      trap1.style.display = 'none';
+      trap2.style.display = 'none';
+      message.textContent = `Game Over 💀 Final Score: ${score}`;
+    }
+
+    function updateUI() {
+      scoreText.textContent = score;
+      levelText.textContent = level;
+      timeText.textContent = timeLeft;
+    }
+  </script>
+</body>
+</html>
